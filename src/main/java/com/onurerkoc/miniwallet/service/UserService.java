@@ -6,6 +6,8 @@ import com.onurerkoc.miniwallet.entity.User;
 import com.onurerkoc.miniwallet.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.onurerkoc.miniwallet.exception.EmailAlreadyExistsException;
+
 
 // Spring'e bu sınıfın iş kurallarını yöneten Service katmanı
 // olduğunu bildiriyoruz.
@@ -26,7 +28,15 @@ public class UserService {
     // yani transaction olarak çalıştırıyoruz.
     @Transactional
     public UserResponse createUser(CreateUserRequest request) {
+    // Aynı e-posta adresine sahip bir kullanıcı olup olmadığını veritabanından kontrol ediyoruz.
+        if (userRepository.existsByEmail(request.getEmail())) {
 
+            // Kullanıcı zaten varsa kayıt işlemini durduruyoruz
+            // ve bu duruma özel bir hata fırlatıyoruz.
+            throw new EmailAlreadyExistsException(
+                    "Bu e-posta adresi zaten kullanılıyor."
+            );
+        }
         // Postman'dan gelen DTO bilgileriyle
         // veritabanına kaydedilecek User nesnesini oluşturuyoruz.
         User user = new User(
