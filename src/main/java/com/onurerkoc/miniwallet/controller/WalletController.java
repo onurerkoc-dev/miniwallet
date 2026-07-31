@@ -9,7 +9,7 @@ import com.onurerkoc.miniwallet.dto.DepositRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
+import com.onurerkoc.miniwallet.dto.ExpenseRequest;
 
 // Bu sınıfın HTTP isteklerini karşılayan bir REST Controller
 // olduğunu Spring'e bildirir.
@@ -66,6 +66,28 @@ public class WalletController {
         // Service katmanına gönderiyoruz.
         WalletResponse walletResponse =
                 walletService.deposit(walletId, request);
+
+        // Güncellenmiş cüzdan bilgilerini API cevabı olarak döndürüyoruz.
+        return walletResponse;
+    }
+    // Bu metot POST /api/wallets/{walletId}/expense
+// isteğini karşılar.
+    @PostMapping("/{walletId}/expense")
+    public WalletResponse expense(
+
+            // URL içerisindeki {walletId} değerini açık şekilde
+            // Long walletId değişkenine aktarır.
+            @PathVariable("walletId") Long walletId,
+
+            // JSON isteğini ExpenseRequest nesnesine dönüştürür.
+            // @Valid, DTO içerisindeki validation kurallarını çalıştırır.
+            @Valid @RequestBody ExpenseRequest request
+    ) {
+
+        // Cüzdan ID'sini ve harcama isteğini
+        // Service katmanına gönderiyoruz.
+        WalletResponse walletResponse =
+                walletService.expense(walletId, request);
 
         // Güncellenmiş cüzdan bilgilerini API cevabı olarak döndürüyoruz.
         return walletResponse;

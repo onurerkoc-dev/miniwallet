@@ -57,4 +57,19 @@ public class GlobalExceptionHandler {
         // JSON hata cevabına dönüştürüyoruz.
         return new ApiErrorResponse(exception.getMessage());
     }
+    // Bu metot yalnızca InsufficientBalanceException
+// türündeki hata oluştuğunda çalışır.
+    @ExceptionHandler(InsufficientBalanceException.class)
+
+// İstek geçerli olsa da mevcut bakiye işlemle çakıştığı için
+// HTTP 409 Conflict durum kodunu döndürüyoruz.
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiErrorResponse handleInsufficientBalance(
+            InsufficientBalanceException exception
+    ) {
+
+        // Exception içerisindeki mesajı düzenli bir
+        // JSON hata cevabına dönüştürüyoruz.
+        return new ApiErrorResponse(exception.getMessage());
+    }
 }
