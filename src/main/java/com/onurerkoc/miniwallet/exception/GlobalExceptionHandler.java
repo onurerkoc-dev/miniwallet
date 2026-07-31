@@ -42,4 +42,19 @@ public class GlobalExceptionHandler {
         // JSON hata cevabına dönüştürüyoruz.
         return new ApiErrorResponse(exception.getMessage());
     }
+    // Bu metot yalnızca WalletNotFoundException
+// türündeki hata oluştuğunda çalışır.
+    @ExceptionHandler(WalletNotFoundException.class)
+
+// Aranan cüzdan bulunamadığı için
+// HTTP 404 Not Found durum kodunu döndürüyoruz.
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiErrorResponse handleWalletNotFound(
+            WalletNotFoundException exception
+    ) {
+
+        // Exception içerisindeki mesajı düzenli bir
+        // JSON hata cevabına dönüştürüyoruz.
+        return new ApiErrorResponse(exception.getMessage());
+    }
 }
