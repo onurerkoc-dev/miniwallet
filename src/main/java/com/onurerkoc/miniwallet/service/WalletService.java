@@ -7,7 +7,8 @@ import com.onurerkoc.miniwallet.exception.WalletNotFoundException;
 import com.onurerkoc.miniwallet.repository.WalletRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.onurerkoc.miniwallet.dto.ExpenseRequest;
+import com.onurerkoc.miniwallet.exception.InsufficientBalanceException;
 import java.math.BigDecimal;
 import java.util.Optional;
 
@@ -99,6 +100,69 @@ public class WalletService {
 
         // Güncellenmiş cüzdan bilgilerini API cevabı olacak
         // WalletResponse nesnesine dönüştürüyoruz.
+        WalletResponse walletResponse = new WalletResponse(
+                savedWallet.getId(),
+                savedWallet.getBalance(),
+                savedWallet.getUserId()
+        );
+
+        // Güncellenmiş cüzdan cevabını Controller katmanına döndürüyoruz.
+        return walletResponse;
+    }
+    // Cüzdandan para harcama işlemini tek bir veritabanı
+// işlemi içerisinde gerçekleştirir.
+    @Transactional
+    public WalletResponse expense(
+            Long walletId,
+            ExpenseRequest request
+    ) {
+
+        // URL'den gelen walletId değerine sahip cüzdanı
+        // veritabanında arıyoruz.
+        Optional<Wallet> optionalWallet =
+                walletRepository.findById(walletId);
+
+        // Cüzdan bulunamazsa harcama işlemine devam etmiyoruz.
+        if (optionalWallet.isEmpty()) {
+            throw new WalletNotFoundException(
+                    "Cüzdan bulunamadı: " + walletId
+            );
+        }
+
+        // Optional içerisindeki mevcut cüzdan nesnesini alıyoruz.
+        Wallet wallet = optionalWallet.get();
+
+        // Cüzdanın mevcut bakiyesini alıyoruz.
+        BigDecimal currentBalance = wallet.getBalance();
+
+        // Postman'dan gönderilen harcama tutarını alıyoruz.
+        BigDecimal expenseAmount = request.getAmount();
+
+        // Mevcut bakiye ile harcama tutarını karşılaştırıyoruz.
+        int comparisonResult =
+                currentBalance.compareTo(expenseAmount);
+
+        // Karşılaştırma sonucu negatifse mevcut bakiye,
+        // harcama tutarından küçüktür.
+        if (comparisonResult < 0) {
+            throw new InsufficientBalanceException(
+                    "Yetersiz bakiye"
+            );
+        }
+
+        // Bakiye yeterliyse harcama tutarını
+        // mevcut bakiyeden çıkarıyoruz.
+        BigDecimal updatedBalance =
+                currentBalance.subtract(expenseAmount);
+
+        // Hesaplanan yeni bakiyeyi Wallet nesnesine yazıyoruz.
+        wallet.setBalance(updatedBalance);
+
+        // Güncellenen cüzdanı MySQL veritabanına kaydediyoruz.
+        Wallet savedWallet = walletRepository.save(wallet);
+
+        // Güncellenmiş cüzdan bilgilerini API cevabında
+        // kullanacağımız WalletResponse nesnesine dönüştürüyoruz.
         WalletResponse walletResponse = new WalletResponse(
                 savedWallet.getId(),
                 savedWallet.getBalance(),
