@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     // Bu metot yalnızca EmailAlreadyExistsException
-    // türündeki hatalar oluştuğunda çalışır.
+    // türündeki hata oluştuğunda çalışır.
     @ExceptionHandler(EmailAlreadyExistsException.class)
 
     // Aynı e-posta mevcut kullanıcıyla çakıştığı için
@@ -22,8 +22,24 @@ public class GlobalExceptionHandler {
             EmailAlreadyExistsException exception
     ) {
 
-        // Exception oluşturulurken verdiğimiz hata mesajını alıp
-        // düzenli bir JSON response nesnesine dönüştürüyoruz.
+        // Exception içerisindeki mesajı JSON response
+        // nesnesine dönüştürüyoruz.
+        return new ApiErrorResponse(exception.getMessage());
+    }
+
+    // Bu metot yalnızca UserNotFoundException
+    // türündeki hata oluştuğunda çalışır.
+    @ExceptionHandler(UserNotFoundException.class)
+
+    // Aranan kullanıcı bulunamadığı için
+    // HTTP 404 Not Found durum kodunu döndürüyoruz.
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiErrorResponse handleUserNotFound(
+            UserNotFoundException exception
+    ) {
+
+        // Exception içerisindeki mesajı düzenli bir
+        // JSON hata cevabına dönüştürüyoruz.
         return new ApiErrorResponse(exception.getMessage());
     }
 }
