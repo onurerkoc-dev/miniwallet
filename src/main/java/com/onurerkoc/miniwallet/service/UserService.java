@@ -8,6 +8,9 @@ import com.onurerkoc.miniwallet.exception.UserNotFoundException;
 import com.onurerkoc.miniwallet.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.onurerkoc.miniwallet.entity.Wallet;
+import com.onurerkoc.miniwallet.repository.WalletRepository;
+
 
 import java.util.Optional;
 
@@ -19,15 +22,22 @@ public class UserService {
     // Kullanıcıları sorgulamak ve veritabanına kaydetmek için
     // UserRepository nesnesine ihtiyacımız var.
     private final UserRepository userRepository;
+    // Yeni oluşturulan cüzdanı veritabanına kaydedebilmek için
+    // WalletRepository nesnesini kullanacağız.
+    private final WalletRepository walletRepository;
 
-    // Spring, oluşturduğu UserRepository nesnesini
-    // constructor üzerinden bu sınıfa verir.
-    public UserService(UserRepository userRepository) {
+    // Spring, UserRepository ve WalletRepository nesnelerini oluşturur
+    // ve constructor üzerinden UserService sınıfına verir.
+    public UserService(
+            UserRepository userRepository,
+            WalletRepository walletRepository
+    ) {
         this.userRepository = userRepository;
+        this.walletRepository = walletRepository;
     }
 
-    // Kullanıcı oluşturma sırasında veritabanına kayıt yapacağımız için
-    // bu işlemi bir transaction içerisinde çalıştırıyoruz.
+    // Kullanıcı ve cüzdan kayıtlarının tek bir işlem olarak çalışmasını sağlar.
+    // Cüzdan kaydedilemezse kullanıcı kaydı da geri alınır.
     @Transactional
     public UserResponse createUser(CreateUserRequest request) {
 
@@ -55,6 +65,12 @@ public class UserService {
         // Kullanıcı MySQL'e kaydedilir ve oluşturulan ID
         // dönen User nesnesinin içerisine yerleştirilir.
         User savedUser = userRepository.save(user);
+        // Kullanıcı kaydedildikten sonra MySQL tarafından oluşturulan ID'yi
+        // kullanarak başlangıç bakiyesi sıfır olan bir cüzdan oluşturuyoruz.
+        Wallet wallet = new Wallet(savedUser.getId());
+
+        // Oluşturduğumuz cüzdanı wallets tablosuna kaydediyoruz.
+        walletRepository.save(wallet);
 
         // Kaydedilen User entity'sini doğrudan dışarıya vermiyoruz.
         // API cevabı olarak UserResponse DTO'suna dönüştürüyoruz.
