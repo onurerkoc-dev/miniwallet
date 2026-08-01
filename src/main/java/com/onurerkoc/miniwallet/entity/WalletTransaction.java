@@ -81,12 +81,22 @@ public class WalletTransaction {
     }
     // Yeni bir para ekleme veya harcama işlemi
 // oluşturmak için kullanılan constructor'dır.
-    public WalletTransaction(TransactionType type, BigDecimal amount, String description, LocalDateTime createdAt, Long walletId) {
+// Yeni bir para ekleme veya harcama işlemi
+// oluşturmak için kullanılan constructor'dır.
+    public WalletTransaction(
+            TransactionType type,
+            BigDecimal amount,
+            String description,
+            Long walletId
+    ) {
         this.type = type;
         this.amount = amount;
         this.description = description;
-        this.createdAt = createdAt;
         this.walletId = walletId;
+
+        // Tarih kullanıcıdan alınmaz.
+        // İşlem oluşturulduğu anda uygulama tarafından belirlenir.
+        this.createdAt = LocalDateTime.now();
     }
 
     // İşlemin veritabanı kimliğini döndürür.
