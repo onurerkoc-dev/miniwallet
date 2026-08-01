@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.onurerkoc.miniwallet.dto.ExpenseRequest;
 import com.onurerkoc.miniwallet.exception.InsufficientBalanceException;
+import com.onurerkoc.miniwallet.entity.TransactionType;
+import com.onurerkoc.miniwallet.entity.WalletTransaction;
+import com.onurerkoc.miniwallet.repository.WalletTransactionRepository;
 import java.math.BigDecimal;
 import java.util.Optional;
 
@@ -20,11 +23,22 @@ public class WalletService {
     // Cüzdan bilgilerini MySQL veritabanından okuyabilmek
     // ve güncelleyebilmek için WalletRepository kullanıyoruz.
     private final WalletRepository walletRepository;
+    // Para ekleme ve harcama işlemlerini
+    // wallet_transactions tablosuna kaydetmek için kullanılır.
+    private final WalletTransactionRepository walletTransactionRepository;
 
-    // Spring tarafından oluşturulan WalletRepository nesnesini
-    // constructor üzerinden bu Service sınıfına alıyoruz.
-    public WalletService(WalletRepository walletRepository) {
+    // Spring tarafından oluşturulan WalletRepository ve
+    // WalletTransactionRepository nesnelerini Service sınıfına alıyoruz.
+    public WalletService(
+            WalletRepository walletRepository,
+            WalletTransactionRepository walletTransactionRepository
+    ) {
+
+        // Cüzdan bakiyesini okumak ve güncellemek için kullanılır.
         this.walletRepository = walletRepository;
+
+        // Para ekleme ve harcama geçmişini kaydetmek için kullanılır.
+        this.walletTransactionRepository = walletTransactionRepository;
     }
 
     // Verilen cüzdan ID'sine sahip cüzdanı veritabanında arar.
@@ -97,6 +111,18 @@ public class WalletService {
 
         // Güncellenen cüzdanı MySQL veritabanına kaydediyoruz.
         Wallet savedWallet = walletRepository.save(wallet);
+        // Başarılı para ekleme işlemini geçmişe kaydetmek için
+        // DEPOSIT türünde yeni bir WalletTransaction oluşturuyoruz.
+        WalletTransaction transaction = new WalletTransaction(
+                TransactionType.DEPOSIT,
+                request.getAmount(),
+                request.getDescription(),
+                savedWallet.getId()
+        );
+
+// Oluşturduğumuz işlem kaydını
+// wallet_transactions tablosuna kaydediyoruz.
+        walletTransactionRepository.save(transaction);
 
         // Güncellenmiş cüzdan bilgilerini API cevabı olacak
         // WalletResponse nesnesine dönüştürüyoruz.
@@ -160,7 +186,18 @@ public class WalletService {
 
         // Güncellenen cüzdanı MySQL veritabanına kaydediyoruz.
         Wallet savedWallet = walletRepository.save(wallet);
+        // Başarılı para harcama işlemini geçmişe kaydetmek için
+        // EXPENSE türünde yeni bir WalletTransaction oluşturuyoruz.
+        WalletTransaction transaction = new WalletTransaction(
+                TransactionType.EXPENSE,
+                request.getAmount(),
+                request.getDescription(),
+                savedWallet.getId()
+        );
 
+// Oluşturduğumuz işlem kaydını
+// wallet_transactions tablosuna kaydediyoruz.
+        walletTransactionRepository.save(transaction);
         // Güncellenmiş cüzdan bilgilerini API cevabında
         // kullanacağımız WalletResponse nesnesine dönüştürüyoruz.
         WalletResponse walletResponse = new WalletResponse(
