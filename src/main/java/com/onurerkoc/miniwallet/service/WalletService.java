@@ -12,6 +12,9 @@ import com.onurerkoc.miniwallet.exception.InsufficientBalanceException;
 import com.onurerkoc.miniwallet.entity.TransactionType;
 import com.onurerkoc.miniwallet.entity.WalletTransaction;
 import com.onurerkoc.miniwallet.repository.WalletTransactionRepository;
+import com.onurerkoc.miniwallet.dto.TransactionResponse;
+import java.util.ArrayList;
+import java.util.List;
 import java.math.BigDecimal;
 import java.util.Optional;
 
@@ -208,5 +211,55 @@ public class WalletService {
 
         // Güncellenmiş cüzdan cevabını Controller katmanına döndürüyoruz.
         return walletResponse;
+    }
+    // Verilen cüzdan ID'sine ait işlem geçmişini
+// en yeni işlemden en eski işleme doğru döndürür.
+    public List<TransactionResponse> getTransactionsByWalletId(
+            Long walletId
+    ) {
+
+        // Önce istenen cüzdanın gerçekten var olup
+        // olmadığını kontrol ediyoruz.
+        Optional<Wallet> optionalWallet =
+                walletRepository.findById(walletId);
+
+        // Cüzdan bulunamazsa işlem geçmişini aramaya
+        // devam etmiyoruz.
+        if (optionalWallet.isEmpty()) {
+            throw new WalletNotFoundException(
+                    "Cüzdan bulunamadı: " + walletId
+            );
+        }
+
+        // Repository'den bu cüzdana ait işlem entity'lerini
+        // en yeniden en eskiye sıralanmış şekilde alıyoruz.
+        List<WalletTransaction> transactions =
+                walletTransactionRepository
+                        .findByWalletIdOrderByCreatedAtDesc(walletId);
+
+        // API cevabında döndüreceğimiz DTO'ları saklamak için
+        // başlangıçta boş bir liste oluşturuyoruz.
+        List<TransactionResponse> responses =
+                new ArrayList<>();
+
+        // Entity listesindeki her işlem kaydını sırayla geziyoruz.
+        for (WalletTransaction transaction : transactions) {
+
+            // Mevcut WalletTransaction entity'sini
+            // TransactionResponse DTO'suna dönüştürüyoruz.
+            TransactionResponse response = new TransactionResponse(
+                    transaction.getId(),
+                    transaction.getType(),
+                    transaction.getAmount(),
+                    transaction.getDescription(),
+                    transaction.getCreatedAt()
+            );
+
+            // Oluşturduğumuz DTO'yu cevap listesine ekliyoruz.
+            responses.add(response);
+        }
+
+        // Hazırlanan DTO listesini Controller katmanına döndürüyoruz.
+        return responses;
     }
 }

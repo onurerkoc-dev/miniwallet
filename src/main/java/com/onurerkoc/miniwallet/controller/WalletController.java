@@ -10,6 +10,9 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import com.onurerkoc.miniwallet.dto.ExpenseRequest;
+import com.onurerkoc.miniwallet.dto.TransactionResponse;
+import java.util.List;
+
 
 // Bu sınıfın HTTP isteklerini karşılayan bir REST Controller
 // olduğunu Spring'e bildirir.
@@ -91,5 +94,23 @@ public class WalletController {
 
         // Güncellenmiş cüzdan bilgilerini API cevabı olarak döndürüyoruz.
         return walletResponse;
+    }
+    // Bu metot GET /api/wallets/{walletId}/transactions
+    // isteğini karşılar.
+    @GetMapping("/{walletId}/transactions")
+    public List<TransactionResponse> getTransactionsByWalletId(
+
+            // URL içerisindeki {walletId} değerini açık şekilde
+            // Long walletId değişkenine aktarır.
+            @PathVariable("walletId") Long walletId
+    ) {
+
+        // URL'den gelen cüzdan kimliğini Service katmanına
+        // gönderip işlem geçmişi listesini alıyoruz.
+        List<TransactionResponse> transactionResponses =
+                walletService.getTransactionsByWalletId(walletId);
+
+        // Hazırlanan işlem listesini API cevabı olarak döndürüyoruz.
+        return transactionResponses;
     }
 }
